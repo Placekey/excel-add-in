@@ -1,10 +1,10 @@
 import * as React from "react";
-import Header from "./Header";
 import Progress from "./Progress";
 // images references in the manifest
 import "../../../assets/ribbon-ico-16.png";
 import "../../../assets/ribbon-ico-32.png";
 import "../../../assets/ribbon-ico-80.png";
+import Initial from "./Initial";
 /* global Button, console, Excel, Header, HeroList, HeroListItem, Progress */
 
 export interface AppProps {
@@ -61,7 +61,7 @@ export default class App extends React.Component<AppProps, AppState> {
 
     return (
       <div className="ms-welcome">
-        <Header logo="assets/logo-filled.png" title={this.props.title} message="Welcome" />
+        <Initial />
       </div>
     );
   }
