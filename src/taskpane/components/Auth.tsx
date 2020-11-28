@@ -1,5 +1,7 @@
 import * as React from "react";
 import { Form, Button, Input, Spin } from "antd";
+import ReactDOM = require("react-dom");
+import AdditionalInfo from "./AdditionalInfo";
 
 export interface AuthProps {}
 
@@ -22,11 +24,18 @@ export default class Auth extends React.Component<AuthProps, AuthState> {
     };
 
     const onFAQ = () => {
-
+      window.open("https://placekey.io/faq", "_blank");
     }
 
     const onGetApiKey = () => {
+      window.open("https://dev.placekey.io/default/register", "_blank");
+    }
 
+    const onAdditionalInfo = () => {
+      ReactDOM.render(
+        <AdditionalInfo />,
+        document.getElementById("container")
+      );
     }
 
     return (
@@ -58,6 +67,9 @@ export default class Auth extends React.Component<AuthProps, AuthState> {
                 </Button>
               </Form.Item>
             </Form>
+            <div  style={{textAlign: "center"}}>
+            <Button type="link" onClick={onAdditionalInfo}>Additional Information</Button>
+            </div>
           </div>
         ) : (
           <div className="centered">
