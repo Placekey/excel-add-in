@@ -7,7 +7,7 @@
   <DisplayName DefaultValue="Placekey"/>
   <Description DefaultValue="Placekey Excel Add-in."/>
   <IconUrl DefaultValue="https://localhost:3000/assets/ribbon-ico-32.png"/>
-  <HighResolutionIconUrl DefaultValue="https://localhost:3000/assets/ribbon-ico-80.png"/>
+  <HighResolutionIconUrl DefaultValue="https://localhost:3000/assets/ribbon-ico-64.png"/>
   <SupportUrl DefaultValue="https://www.placekey.io/"/>
   <AppDomains>
     <AppDomain>https://www.placekey.io/</AppDomain>

@@ -28,7 +28,7 @@ export default class AdditionalInfo extends React.Component<AdditionalInfoProps,
     };
 
     const onFeedback = () => {
-      window.open("https://www.placekey.io/feedbac", "_blank");
+      window.open("https://www.placekey.io/feedback", "_blank");
     };
 
     const onTerms = () => {
