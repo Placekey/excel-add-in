@@ -2,11 +2,13 @@ import * as React from "react";
 import { Form, Button, Input, Spin } from "antd";
 import ReactDOM = require("react-dom");
 import AdditionalInfo from "./AdditionalInfo";
+import Home from "./Home";
 
 export interface AuthProps {}
 
 export interface AuthState {
   inProgress: boolean;
+  token: string;
 }
 
 export default class Auth extends React.Component<AuthProps, AuthState> {
@@ -14,13 +16,34 @@ export default class Auth extends React.Component<AuthProps, AuthState> {
     super(props, {});
 
     this.state = {
-      inProgress: false
+      inProgress: false,
+      token: ""
     };
+  }
+
+  componentDidMount() {
+    const authKey = Office.context.document.settings.get('placeKeyToken');
+    if (authKey) {
+      this.setState({ token: authKey });
+    }
   }
 
   render() {
     const onTokenValidate = async values => {
         console.log(values);
+        if(values.apiKey) {
+          Office.context.document.settings.set('placeKeyToken', values.apiKey);
+          Office.context.document.settings.saveAsync(function(asyncResult) {
+            if (asyncResult.status == Office.AsyncResultStatus.Failed) {
+              console.log("save token failed");
+            } else {
+              ReactDOM.render(
+                <Home />,
+                document.getElementById("container")
+              );
+            }
+          });
+        }
     };
 
     const onFAQ = () => {
@@ -53,7 +76,7 @@ export default class Auth extends React.Component<AuthProps, AuthState> {
                 name="apiKey"
                 rules={[{ required: true, message: "Please input your API Key!" }]}
               >
-                <Input.Password placeholder="8fdERUkFSnI2fsE4j1fd2CczAplSINEj"/>
+                <Input placeholder="8fdERUkFSnI2fsE4j1fd2CczAplSINEj" value={this.state.token}/>
               </Form.Item>
               <Form.Item style={{marginTop: "20px"}}>
                 <Button type="link" onClick={onFAQ} style={{margin: "3px"}}>
