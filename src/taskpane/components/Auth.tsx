@@ -3,6 +3,7 @@ import { Form, Button, Input, Spin } from "antd";
 import ReactDOM = require("react-dom");
 import AdditionalInfo from "./AdditionalInfo";
 import Home from "./Home";
+import { FormInstance } from "antd/lib/form";
 
 export interface AuthProps {}
 
@@ -12,6 +13,8 @@ export interface AuthState {
 }
 
 export default class Auth extends React.Component<AuthProps, AuthState> {
+  formRef = React.createRef<FormInstance>();
+  
   constructor(props, {}) {
     super(props, {});
 
@@ -24,7 +27,9 @@ export default class Auth extends React.Component<AuthProps, AuthState> {
   componentDidMount() {
     const authKey = Office.context.document.settings.get('placeKeyToken');
     if (authKey) {
-      this.setState({ token: authKey });
+      this.formRef.current.setFieldsValue({
+        apiKey: authKey
+      });
     }
   }
 
@@ -60,7 +65,7 @@ export default class Auth extends React.Component<AuthProps, AuthState> {
         document.getElementById("container")
       );
     }
-
+    
     return (
       <div className="placekey-container">
         <img
@@ -70,13 +75,13 @@ export default class Auth extends React.Component<AuthProps, AuthState> {
         />
         {!this.state.inProgress ? (
           <div style={{marginTop: "10%"}}>
-            <Form name="basic" onFinish={onTokenValidate}>
+            <Form name="basic" onFinish={onTokenValidate} ref={this.formRef}>
               <Form.Item
                 label="API Key"
                 name="apiKey"
                 rules={[{ required: true, message: "Please input your API Key!" }]}
               >
-                <Input placeholder="8fdERUkFSnI2fsE4j1fd2CczAplSINEj" value={this.state.token}/>
+                <Input placeholder="8fdERUkFSnI2fsE4j1fd2CczAplSINEj"/>
               </Form.Item>
               <Form.Item style={{marginTop: "20px"}}>
                 <Button type="link" onClick={onFAQ} style={{margin: "3px"}}>

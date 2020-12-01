@@ -67,7 +67,7 @@ export default class AdditionalInfo extends React.Component<AdditionalInfoProps,
             </Form.Item>
             <Form.Item>
               <Button block onClick={onFeedback} style={{ margin: "3px", borderRadius: "5px" }}>
-                Terms of Service
+                Give us feedback
               </Button>
             </Form.Item>
             <Form.Item style={{ marginTop: "20px" }}>
