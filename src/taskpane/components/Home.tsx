@@ -35,14 +35,7 @@ class Home extends React.Component<HomeProps, HomeState> {
   }
 
   async componentDidMount() {
-    const authKey = Office.context.document.settings.get("placeKeyToken");
-    if (authKey) {
-      if (authKey) {
-        await this.getWorkSheets();
-      }
-      this.getSheetToast();
-    } else {
-    }
+    await this.bindCurrentSheetData();
   }
 
   getWorkSheets = async () => {
@@ -74,9 +67,6 @@ class Home extends React.Component<HomeProps, HomeState> {
       return context.sync().then(function() {
         that.checkEmptySheet(sheet.name);
         that.setState({ activeSheet: sheet.name });
-        this.formRef.current.setFieldsValue({
-          sheetName: sheet.name
-        });
       });
     }).catch(this.errorHandlerFunction);
   };
@@ -92,7 +82,8 @@ class Home extends React.Component<HomeProps, HomeState> {
       range.load("address");
       return context.sync().then(function() {
         try {
-          if (range.address == "Sheet1!A1") {
+          var lastChars = range.address.substr(range.address.length - 3);
+          if (lastChars == "!A1") {
             that.setState({ isEmptyDataView: "block", isDataLoading: false });
           } else {
             that.getRows(worksheetName, range.address);
@@ -107,29 +98,35 @@ class Home extends React.Component<HomeProps, HomeState> {
 
   getRows = (worksheetName, rangeVal) => {
     var that = this;
-    Excel.run(function (context) {
+    Excel.run(function(context) {
       var sheet = context.workbook.worksheets.getItem(worksheetName);
       var range = sheet.getRange(rangeVal);
-      range.load("values"); 
-      return context.sync()
-          .then(function () {
-              var rangeCol = range.values[0];
-              var allColumns: any =  that.state.columns.concat(rangeCol);
-              that.setState({columns: allColumns, isFillDataView: "block", isDataLoading: false })
-              console.log(JSON.stringify(range.values, null, 4));
-          });
-  }).catch(this.errorHandlerFunction);
-  }
-
-  getSheetToast = () => {};
+      range.load("values");
+      return context.sync().then(function() {
+        var lastChars = rangeVal.substr(rangeVal.length - 3);
+        if (lastChars != "!A1") {
+          var rangeCol = range.values[0];
+          var allColumns: any = [];
+          if (rangeCol.length > 0) {
+            allColumns = that.state.columns.concat(rangeCol);
+          } else {
+            allColumns = that.state.columns;
+          }
+          that.setState({ columns: allColumns, isFillDataView: "block", isDataLoading: false });
+        }
+      });
+    }).catch(this.errorHandlerFunction);
+  };
 
   onGenerateSampleData = () => {
+    var that = this;
     Excel.run(function(context) {
-      var sheet = context.workbook.worksheets.getActiveWorksheet();
+      var sheet = context.workbook.worksheets.getItem(that.state.activeSheet);
       var sampleTable = sheet.tables.add("A1:G1", true);
-      sampleTable.name = "Sample";
 
-      sampleTable.getHeaderRowRange().values = [["Name", "Street Address", "City", "State", "Zip code", "Latitude", "Longitude"]];
+      sampleTable.getHeaderRowRange().values = [
+        ["Name", "Street Address", "City", "State", "Zip code", "Latitude", "Longitude"]
+      ];
 
       sampleTable.rows.add(null, [
         ["Twin Peaks Petroleum", "598 Portola Dr", "San Francisco", "CA", "94131", "37.7371", "-122.44283"],
@@ -144,14 +141,39 @@ class Home extends React.Component<HomeProps, HomeState> {
         sheet.getUsedRange().format.autofitRows();
       }
 
-      sheet.activate();
-      ReactDOM.render(<Home />, document.getElementById("container"));
+      //sheet.activate();
+      that.setState({ isEmptyDataView: "none", isDataLoading: true });
+      that.bindCurrentSheetData();
+      that.setState({ isDataLoading: false });
       return context.sync();
     }).catch(this.errorHandlerFunction);
   };
 
   errorHandlerFunction = error => {
     console.log(error);
+  };
+
+  bindCurrentSheetData = async () => {
+    const authKey = Office.context.document.settings.get("placeKeyToken");
+    if (authKey) {
+      if (authKey) {
+        await this.getWorkSheets();
+      }
+    } else {
+    }
+  };
+
+  onChangeActiveSheet = value => {
+    console.log(value);
+    this.setState({ activeSheet: value });
+    Excel.run(function(context) {
+      var sheet = context.workbook.worksheets.getItem(value);
+      sheet.activate();
+      sheet.load("name");
+      return context.sync().then(function() {
+        console.log(`The active worksheet is "${sheet.name}"`);
+      });
+    }).catch(this.errorHandlerFunction);
   };
 
   render() {
@@ -178,7 +200,7 @@ class Home extends React.Component<HomeProps, HomeState> {
         <div id="sampleDataInput" style={{ marginTop: "10px", display: this.state.isEmptyDataView }}>
           <span style={{ fontWeight: 600 }}>This Sheet looks empty.</span>
           <br /> Fill with sample data?
-          <div style={{ textAlign: "center" }}>
+          <div style={{ textAlign: "center", paddingTop: "10px" }}>
             <Button
               onClick={this.onGenerateSampleData}
               htmlType="submit"
@@ -199,7 +221,11 @@ class Home extends React.Component<HomeProps, HomeState> {
             <p style={{ marginTop: "0px", marginBottom: "10px", fontWeight: "bold" }}>Data Location:</p>
             <Form.Item name="sheetName">
               <label>Sheets</label>
-              <Select>
+              <Select
+                defaultValue={this.state.activeSheet}
+                value={this.state.activeSheet}
+                onChange={this.onChangeActiveSheet}
+              >
                 {this.state.allSheets.map((item, index) => {
                   return (
                     <Option value={item} key={index}>
