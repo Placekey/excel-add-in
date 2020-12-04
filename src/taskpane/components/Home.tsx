@@ -153,6 +153,21 @@ class Home extends React.Component<HomeProps, HomeState> {
     console.log(error);
   };
 
+  onChangeActiveSheet = value => {
+    var that = this;
+    console.log(value);
+    this.setState({ activeSheet: value, isEmptyDataView: "none", isFillDataView: "none" });
+    Excel.run(function(context) {
+      var sheet = context.workbook.worksheets.getItem(value);
+      sheet.activate();
+      sheet.load("name");
+      return context.sync().then(function() {
+        console.log(`The active worksheet is "${sheet.name}"`);
+        that.bindCurrentSheetData();
+      });
+    }).catch(this.errorHandlerFunction);
+  };
+  
   bindCurrentSheetData = async () => {
     const authKey = Office.context.document.settings.get("placeKeyToken");
     if (authKey) {
@@ -161,19 +176,6 @@ class Home extends React.Component<HomeProps, HomeState> {
       }
     } else {
     }
-  };
-
-  onChangeActiveSheet = value => {
-    console.log(value);
-    this.setState({ activeSheet: value });
-    Excel.run(function(context) {
-      var sheet = context.workbook.worksheets.getItem(value);
-      sheet.activate();
-      sheet.load("name");
-      return context.sync().then(function() {
-        console.log(`The active worksheet is "${sheet.name}"`);
-      });
-    }).catch(this.errorHandlerFunction);
   };
 
   render() {
