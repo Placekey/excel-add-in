@@ -90,7 +90,7 @@ export default class Auth extends React.Component<AuthProps, AuthState> {
                 <Button onClick={onGetApiKey} style={{margin: "3px"}}>
                     Get a Free API Key
                 </Button>
-                <Button htmlType="submit" style={{ backgroundColor: "black", color: "white", margin: "3px" }}>
+                <Button htmlType="submit" style={{ backgroundColor: "rgba(0, 0, 0, 0.897)", color: "white", margin: "3px" , borderRadius: "5px"}}>
                     Finish Setup
                 </Button>
               </Form.Item>

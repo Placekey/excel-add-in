@@ -130,3 +130,13 @@ select:active {
 .ant-checkbox-wrapper {
   margin-left: 0px !important;
 }
+
+.centeredSpinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.ant-spin-dot-item {
+  background-color: rgba(0, 0, 0, 0.897) !important
+}
