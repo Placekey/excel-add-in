@@ -15,6 +15,8 @@ export interface HomeState {
   allSheets: any[];
   activeSheet: string;
   isDataLoading: boolean;
+  isEmptyDataView: string;
+  isFillDataView: string;
 }
 
 class Home extends React.Component<HomeProps, HomeState> {
@@ -31,7 +33,9 @@ class Home extends React.Component<HomeProps, HomeState> {
       ],
       allSheets: [],
       activeSheet: "",
-      isDataLoading: true
+      isDataLoading: true,
+      isEmptyDataView: "none",
+      isFillDataView: "none"
     };
   }
 
@@ -44,6 +48,7 @@ class Home extends React.Component<HomeProps, HomeState> {
       this.formRef.current.setFieldsValue({
         sheetName: this.state.activeSheet
       });
+      this.getSheetToast();
     } else {
     }
   }
@@ -64,20 +69,44 @@ class Home extends React.Component<HomeProps, HomeState> {
           workSheets.push(sheet.name);
         });
         that.setState({ allSheets: workSheets });
+        that.getActiveSheet();
       });
     }).catch(this.errorHandlerFunction);
   };
 
-  // getActiveSheet = async() => {
-  //   var that = this;
-  //   Excel.run(async function(context) {
-  //     var sheet = context.workbook.worksheets.getActiveWorksheet();
-  //     sheet.load("name");
-  //     return context.sync().then(function() {
-  //       that.setState({activeSheet: sheet.name});
-  //     });
-  //   }).catch(this.errorHandlerFunction);
-  // }
+  getActiveSheet = async() => {
+    var that = this;
+    Excel.run(async function(context) {
+      var sheet = context.workbook.worksheets.getActiveWorksheet();
+      sheet.load("name");
+      return context.sync().then(function() {
+        that.getRow(sheet.name)
+        that.setState({activeSheet: sheet.name});
+      });
+    }).catch(this.errorHandlerFunction);
+  }
+
+ getRow = (worksheetName) => {
+    var that = this;
+    Excel.run(function (context) {
+      console.log('Hello');
+        var range = context.workbook.worksheets.getItem(worksheetName).getUsedRange().getRow(0);
+        range.load('address');
+        return context.sync().then(function () {
+            try {
+              that.setState({isFillDataView: "block", isDataLoading: false})
+            } catch (e) {
+              that.setState({isEmptyDataView: "block", isDataLoading: false})
+            }
+            console.log(range.address); 
+        })
+    })
+    .catch(this.errorHandlerFunction);
+}
+
+  getSheetToast = () => {
+
+  }
 
   errorHandlerFunction = error => {
     console.log(error);
@@ -106,7 +135,7 @@ class Home extends React.Component<HomeProps, HomeState> {
 
     return (
       <div className="placekey-container">
-        <div id="sampleDataInput" style={{ marginTop: "10px", display: "none" }}>
+        <div id="sampleDataInput" style={{ marginTop: "10px", display: this.state.isEmptyDataView }}>
           <span style={{ fontWeight: 600 }}>This Sheet looks empty.</span>
           <br /> Fill with sample data?
           <div style={{ textAlign: "center" }}>
@@ -125,7 +154,7 @@ class Home extends React.Component<HomeProps, HomeState> {
             </Button>
           </div>
         </div>
-        <div id="generateData" style={{ display: "none" }}>
+        <div id="generateData" style={{ display: this.state.isFillDataView }}>
           <Form name="map-columns" ref={this.formRef}>
             <p style={{ marginTop: "0px", marginBottom: "10px", fontWeight: "bold" }}>Data Location:</p>
             <Form.Item name="sheetName">
