@@ -25,12 +25,7 @@ class Home extends React.Component<HomeProps, HomeState> {
   constructor(props) {
     super(props);
     this.state = {
-      columns: [
-        { key: 1, text: "--" },
-        { key: 2, text: "column1" },
-        { key: 3, text: "column2" },
-        { key: 4, text: "column3" }
-      ],
+      columns: ["--"],
       allSheets: [],
       activeSheet: "",
       isDataLoading: true,
@@ -45,9 +40,6 @@ class Home extends React.Component<HomeProps, HomeState> {
       if (authKey) {
         await this.getWorkSheets();
       }
-      this.formRef.current.setFieldsValue({
-        sheetName: this.state.activeSheet
-      });
       this.getSheetToast();
     } else {
     }
@@ -74,39 +66,89 @@ class Home extends React.Component<HomeProps, HomeState> {
     }).catch(this.errorHandlerFunction);
   };
 
-  getActiveSheet = async() => {
+  getActiveSheet = async () => {
     var that = this;
     Excel.run(async function(context) {
       var sheet = context.workbook.worksheets.getActiveWorksheet();
       sheet.load("name");
       return context.sync().then(function() {
-        that.getRow(sheet.name)
-        that.setState({activeSheet: sheet.name});
+        that.checkEmptySheet(sheet.name);
+        that.setState({ activeSheet: sheet.name });
+        this.formRef.current.setFieldsValue({
+          sheetName: sheet.name
+        });
       });
     }).catch(this.errorHandlerFunction);
-  }
+  };
 
- getRow = (worksheetName) => {
+  checkEmptySheet = worksheetName => {
+    var that = this;
+    Excel.run(function(context) {
+      console.log("Hello");
+      var range = context.workbook.worksheets
+        .getItem(worksheetName)
+        .getUsedRange()
+        .getRow(0);
+      range.load("address");
+      return context.sync().then(function() {
+        try {
+          if (range.address == "Sheet1!A1") {
+            that.setState({ isEmptyDataView: "block", isDataLoading: false });
+          } else {
+            that.getRows(worksheetName, range.address);
+          }
+        } catch (e) {
+          that.setState({ isEmptyDataView: "block", isDataLoading: false });
+        }
+        console.log(range.address);
+      });
+    }).catch(this.errorHandlerFunction);
+  };
+
+  getRows = (worksheetName, rangeVal) => {
     var that = this;
     Excel.run(function (context) {
-      console.log('Hello');
-        var range = context.workbook.worksheets.getItem(worksheetName).getUsedRange().getRow(0);
-        range.load('address');
-        return context.sync().then(function () {
-            try {
-              that.setState({isFillDataView: "block", isDataLoading: false})
-            } catch (e) {
-              that.setState({isEmptyDataView: "block", isDataLoading: false})
-            }
-            console.log(range.address); 
-        })
-    })
-    .catch(this.errorHandlerFunction);
-}
-
-  getSheetToast = () => {
-
+      var sheet = context.workbook.worksheets.getItem(worksheetName);
+      var range = sheet.getRange(rangeVal);
+      range.load("values"); 
+      return context.sync()
+          .then(function () {
+              var rangeCol = range.values[0];
+              var allColumns: any =  that.state.columns.concat(rangeCol);
+              that.setState({columns: allColumns, isFillDataView: "block", isDataLoading: false })
+              console.log(JSON.stringify(range.values, null, 4));
+          });
+  }).catch(this.errorHandlerFunction);
   }
+
+  getSheetToast = () => {};
+
+  onGenerateSampleData = () => {
+    Excel.run(function(context) {
+      var sheet = context.workbook.worksheets.getActiveWorksheet();
+      var sampleTable = sheet.tables.add("A1:G1", true);
+      sampleTable.name = "Sample";
+
+      sampleTable.getHeaderRowRange().values = [["Name", "Street Address", "City", "State", "Zip code", "Latitude", "Longitude"]];
+
+      sampleTable.rows.add(null, [
+        ["Twin Peaks Petroleum", "598 Portola Dr", "San Francisco", "CA", "94131", "37.7371", "-122.44283"],
+        ["", "", "", "", "", "37.7371", "-122.44283"],
+        ["Beretta", "1199 Valencia St", "San Francisco", "CA", "94110", "", ""],
+        ["Tasty Hand Pulled Noodle", "1 Doyers St", "New York", "ny", "10013", "", ""],
+        ["", "1 Doyers St", "New York", "NY", "10013", "", ""]
+      ]);
+
+      if (Office.context.requirements.isSetSupported("ExcelApi", "1.2")) {
+        sheet.getUsedRange().format.autofitColumns();
+        sheet.getUsedRange().format.autofitRows();
+      }
+
+      sheet.activate();
+      ReactDOM.render(<Home />, document.getElementById("container"));
+      return context.sync();
+    }).catch(this.errorHandlerFunction);
+  };
 
   errorHandlerFunction = error => {
     console.log(error);
@@ -131,8 +173,6 @@ class Home extends React.Component<HomeProps, HomeState> {
 
     const onGeneratePlaceKey = () => {};
 
-    const onGenerateSampleData = () => {};
-
     return (
       <div className="placekey-container">
         <div id="sampleDataInput" style={{ marginTop: "10px", display: this.state.isEmptyDataView }}>
@@ -140,7 +180,7 @@ class Home extends React.Component<HomeProps, HomeState> {
           <br /> Fill with sample data?
           <div style={{ textAlign: "center" }}>
             <Button
-              onClick={onGenerateSampleData}
+              onClick={this.onGenerateSampleData}
               htmlType="submit"
               style={{
                 backgroundColor: "rgba(0, 0, 0, 0.897)",
@@ -177,8 +217,8 @@ class Home extends React.Component<HomeProps, HomeState> {
               <Select defaultValue="--">
                 {this.state.columns.map((item, index) => {
                   return (
-                    <Option value={item.key} key={index}>
-                      {item.text}
+                    <Option value={item} key={index}>
+                      {item}
                     </Option>
                   );
                 })}
@@ -191,8 +231,8 @@ class Home extends React.Component<HomeProps, HomeState> {
               <Select defaultValue="--">
                 {this.state.columns.map((item, index) => {
                   return (
-                    <Option value={item.key} key={index}>
-                      {item.text}
+                    <Option value={item} key={index}>
+                      {item}
                     </Option>
                   );
                 })}
@@ -205,8 +245,8 @@ class Home extends React.Component<HomeProps, HomeState> {
               <Select defaultValue="--">
                 {this.state.columns.map((item, index) => {
                   return (
-                    <Option value={item.key} key={index}>
-                      {item.text}
+                    <Option value={item} key={index}>
+                      {item}
                     </Option>
                   );
                 })}
@@ -219,8 +259,8 @@ class Home extends React.Component<HomeProps, HomeState> {
               <Select defaultValue="--">
                 {this.state.columns.map((item, index) => {
                   return (
-                    <Option value={item.key} key={index}>
-                      {item.text}
+                    <Option value={item} key={index}>
+                      {item}
                     </Option>
                   );
                 })}
@@ -233,8 +273,8 @@ class Home extends React.Component<HomeProps, HomeState> {
               <Select defaultValue="--">
                 {this.state.columns.map((item, index) => {
                   return (
-                    <Option value={item.key} key={index}>
-                      {item.text}
+                    <Option value={item} key={index}>
+                      {item}
                     </Option>
                   );
                 })}
@@ -247,8 +287,8 @@ class Home extends React.Component<HomeProps, HomeState> {
               <Select defaultValue="--">
                 {this.state.columns.map((item, index) => {
                   return (
-                    <Option value={item.key} key={index}>
-                      {item.text}
+                    <Option value={item} key={index}>
+                      {item}
                     </Option>
                   );
                 })}
@@ -261,8 +301,8 @@ class Home extends React.Component<HomeProps, HomeState> {
               <Select defaultValue="--">
                 {this.state.columns.map((item, index) => {
                   return (
-                    <Option value={item.key} key={index}>
-                      {item.text}
+                    <Option value={item} key={index}>
+                      {item}
                     </Option>
                   );
                 })}
@@ -275,8 +315,8 @@ class Home extends React.Component<HomeProps, HomeState> {
               <Select defaultValue="--">
                 {this.state.columns.map((item, index) => {
                   return (
-                    <Option value={item.key} key={index}>
-                      {item.text}
+                    <Option value={item} key={index}>
+                      {item}
                     </Option>
                   );
                 })}
