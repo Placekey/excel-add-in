@@ -119,6 +119,7 @@ class Home extends React.Component<HomeProps, HomeState> {
   };
 
   onGenerateSampleData = () => {
+    this.setState({ isEmptyDataView: "none", isDataLoading: true, isFillDataView: "block" });
     var that = this;
     Excel.run(function(context) {
       var sheet = context.workbook.worksheets.getItem(that.state.activeSheet);
@@ -142,7 +143,6 @@ class Home extends React.Component<HomeProps, HomeState> {
       }
 
       //sheet.activate();
-      that.setState({ isEmptyDataView: "none", isDataLoading: true });
       that.bindCurrentSheetData();
       that.setState({ isDataLoading: false });
       return context.sync();
@@ -156,7 +156,7 @@ class Home extends React.Component<HomeProps, HomeState> {
   onChangeActiveSheet = value => {
     var that = this;
     console.log(value);
-    this.setState({ activeSheet: value, isEmptyDataView: "none", isFillDataView: "none" });
+    this.setState({ activeSheet: value, isEmptyDataView: "none", isFillDataView: "none", isDataLoading: true });
     Excel.run(function(context) {
       var sheet = context.workbook.worksheets.getItem(value);
       sheet.activate();
