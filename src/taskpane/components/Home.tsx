@@ -1,4 +1,4 @@
-import { Button, Checkbox, Divider, Form, Select, Spin, Typography } from "antd";
+import { Button, Checkbox, Divider, Form, Modal, Select, Spin, Typography } from "antd";
 import * as React from "react";
 import ReactDOM = require("react-dom");
 import Auth from "./Auth";
@@ -29,6 +29,8 @@ export interface HomeState {
   isNameMatch: boolean;
   isInsertError: boolean;
   isOverwrite: boolean;
+
+  isGenerateButtonDisabled: boolean;
 }
 
 class Home extends React.Component<HomeProps, HomeState> {
@@ -54,7 +56,8 @@ class Home extends React.Component<HomeProps, HomeState> {
       isAddressMatch: false,
       isNameMatch: false,
       isInsertError: false,
-      isOverwrite: false
+      isOverwrite: false,
+      isGenerateButtonDisabled: false
     };
   }
 
@@ -227,7 +230,58 @@ class Home extends React.Component<HomeProps, HomeState> {
       this.setState({ isOverwrite: e.target.checked });
     };
 
-    const onGeneratePlaceKey = () => {};
+    const onGeneratePlaceKey = () => {
+      this.setState({ isGenerateButtonDisabled: true });
+      if (
+        (this.state.streetColumn == "--" || this.state.regionColumn == "--") &&
+        (this.state.latitudeColumn == "--" || this.state.longitudeColumn == "--")
+      ) {
+        Modal.warning({
+          title: "Placekey",
+          content: "Please select either latitude and longitude or street address and state",
+          width: "85%"
+        });
+        this.setState({ isGenerateButtonDisabled: false });
+        return false;
+      }
+      let columns = [];
+      columns.push(
+        this.state.streetColumn,
+        this.state.cityColumn,
+        this.state.regionColumn,
+        this.state.postalCodeColumn,
+        this.state.locationNameColumn,
+        this.state.latitudeColumn,
+        this.state.longitudeColumn,
+        this.state.countryColumn
+      );
+      for (var k = 0; k < columns.length; k++) {
+        if (columns[k] != "--" && columns[k] != true && columns[k] != false) {
+          var count = countInArray(columns, columns[k]);
+          console.log(count);
+          if (count > 1) {
+            Modal.warning({
+              title: "Placekey",
+              content: "The same column is mapped to more than one field. Please map only one column per field.",
+              width: "85%"
+            });
+            this.setState({ isGenerateButtonDisabled: false });
+            return false;
+          }
+        }
+      }
+      console.log(this.state.countryColumn);
+    };
+
+    const countInArray = (array, what) => {
+      var count = 0;
+      for (var i = 0; i < array.length; i++) {
+        if (array[i] === what) {
+          count++;
+        }
+      }
+      return count;
+    };
 
     return (
       <div className="placekey-container">
@@ -450,6 +504,7 @@ class Home extends React.Component<HomeProps, HomeState> {
             </div>
             <div style={{ textAlign: "center" }}>
               <Button
+                disabled={this.state.isGenerateButtonDisabled}
                 onClick={onGeneratePlaceKey}
                 htmlType="submit"
                 style={{
