@@ -31,6 +31,7 @@ export interface HomeState {
   isOverwrite: boolean;
 
   isGenerateButtonDisabled: boolean;
+  progressMessage: string;
 }
 
 class Home extends React.Component<HomeProps, HomeState> {
@@ -57,7 +58,8 @@ class Home extends React.Component<HomeProps, HomeState> {
       isNameMatch: false,
       isInsertError: false,
       isOverwrite: false,
-      isGenerateButtonDisabled: false
+      isGenerateButtonDisabled: false,
+      progressMessage: ""
     };
   }
 
@@ -270,7 +272,15 @@ class Home extends React.Component<HomeProps, HomeState> {
           }
         }
       }
-      console.log(this.state.countryColumn);
+
+      this.setState({progressMessage: "Working..."});
+
+      setTimeout(
+        () => this.setState({progressMessage: "Please wait..."}), 
+        1000
+      );
+      this.setState({ isGenerateButtonDisabled: false });
+      return false;
     };
 
     const countInArray = (array, what) => {
@@ -518,6 +528,8 @@ class Home extends React.Component<HomeProps, HomeState> {
                 Generate Placekeys
               </Button>
             </div>
+            <br />
+            <div id="generateToast" style={{fontStyle: "itali", color: "#484852", marginLeft: "8px"}}>{this.state.progressMessage}</div>
           </Form>
         </div>
         <div>
