@@ -26,20 +26,6 @@ class Initial extends React.Component<InitialProps, InitialState> {
     } else {
       this.setState({ isLogged: false });
     }
-
-    OfficeRuntime.storage.getItem("placeKeyToken").then(
-      result => {
-        if (result) {
-          this.setState({ isLogged: true });
-        } else {
-          this.setState({ isLogged: false });
-        }
-      },
-      error => {
-        console.log(error);
-        this.setState({ isLogged: false });
-      }
-    );
   }
 
   render() {

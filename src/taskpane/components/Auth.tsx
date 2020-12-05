@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Form, Button, Input, Spin } from "antd";
+import { Form, Button, Input, Spin, Row } from "antd";
 import ReactDOM = require("react-dom");
 import AdditionalInfo from "./AdditionalInfo";
 import Home from "./Home";
@@ -83,17 +83,19 @@ export default class Auth extends React.Component<AuthProps, AuthState> {
               >
                 <Input placeholder="8fdERUkFSnI2fsE4j1fd2CczAplSINEj"/>
               </Form.Item>
+              <Row>
               <Form.Item style={{marginTop: "20px"}}>
-                <Button type="link" onClick={onFAQ} style={{margin: "3px"}}>
+                <Button type="link" onClick={onFAQ} style={{margin: "3px", paddingLeft: "8px", paddingRight: "8px"}}>
                     FAQ
                 </Button>
-                <Button onClick={onGetApiKey} style={{margin: "3px"}}>
+                <Button onClick={onGetApiKey} style={{margin: "3px", paddingLeft: "8px", paddingRight: "8px"}}>
                     Get a Free API Key
                 </Button>
-                <Button htmlType="submit" style={{ backgroundColor: "rgba(0, 0, 0, 0.897)", color: "white", margin: "3px" , borderRadius: "5px"}}>
+                <Button htmlType="submit" style={{ backgroundColor: "rgba(0, 0, 0, 0.897)", color: "white", margin: "3px" , borderRadius: "5px", paddingLeft: "8px",  paddingRight: "8px"}}>
                     Finish Setup
                 </Button>
               </Form.Item>
+              </Row>
             </Form>
             <div  style={{textAlign: "center"}}>
             <Button type="link" onClick={onAdditionalInfo}>Additional Information</Button>

@@ -17,6 +17,18 @@ export interface HomeState {
   isDataLoading: boolean;
   isEmptyDataView: string;
   isFillDataView: string;
+  streetColumn: string;
+  cityColumn: string;
+  regionColumn: string;
+  postalCodeColumn: string;
+  locationNameColumn: string;
+  latitudeColumn: string;
+  longitudeColumn: string;
+  countryColumn: string;
+  isAddressMatch: boolean;
+  isNameMatch: boolean;
+  isInsertError: boolean;
+  isOverwrite: boolean;
 }
 
 class Home extends React.Component<HomeProps, HomeState> {
@@ -30,7 +42,19 @@ class Home extends React.Component<HomeProps, HomeState> {
       activeSheet: "",
       isDataLoading: true,
       isEmptyDataView: "none",
-      isFillDataView: "none"
+      isFillDataView: "none",
+      streetColumn: "--",
+      cityColumn: "--",
+      regionColumn: "--",
+      postalCodeColumn: "--",
+      locationNameColumn: "--",
+      latitudeColumn: "--",
+      longitudeColumn: "--",
+      countryColumn: "--",
+      isAddressMatch: false,
+      isNameMatch: false,
+      isInsertError: false,
+      isOverwrite: false
     };
   }
 
@@ -167,7 +191,7 @@ class Home extends React.Component<HomeProps, HomeState> {
       });
     }).catch(this.errorHandlerFunction);
   };
-  
+
   bindCurrentSheetData = async () => {
     const authKey = Office.context.document.settings.get("placeKeyToken");
     if (authKey) {
@@ -187,13 +211,21 @@ class Home extends React.Component<HomeProps, HomeState> {
       ReactDOM.render(<Auth />, document.getElementById("container"));
     };
 
-    const onAddressChange = () => {};
+    const onAddressChange = e => {
+      this.setState({ isAddressMatch: e.target.checked });
+    };
 
-    const onNameMatchChange = () => {};
+    const onNameMatchChange = e => {
+      this.setState({ isNameMatch: e.target.checked });
+    };
 
-    const onInssertErrorChange = () => {};
+    const onInssertErrorChange = e => {
+      this.setState({ isInsertError: e.target.checked });
+    };
 
-    const onOverwriteChange = () => {};
+    const onOverwriteChange = e => {
+      this.setState({ isOverwrite: e.target.checked });
+    };
 
     const onGeneratePlaceKey = () => {};
 
@@ -242,7 +274,13 @@ class Home extends React.Component<HomeProps, HomeState> {
               <label>
                 Street Address <i style={{ color: "#696464", paddingLeft: "9px" }}>- e.g. 598 Portola Dr </i>
               </label>
-              <Select defaultValue="--">
+              <Select
+                defaultValue={this.state.streetColumn}
+                value={this.state.streetColumn}
+                onChange={value => {
+                  this.setState({ streetColumn: value });
+                }}
+              >
                 {this.state.columns.map((item, index) => {
                   return (
                     <Option value={item} key={index}>
@@ -256,7 +294,13 @@ class Home extends React.Component<HomeProps, HomeState> {
               <label>
                 City<i style={{ color: "#696464", paddingLeft: "9px" }}>- e.g. San Fransisco</i>
               </label>
-              <Select defaultValue="--">
+              <Select
+                defaultValue={this.state.cityColumn}
+                value={this.state.cityColumn}
+                onChange={value => {
+                  this.setState({ cityColumn: value });
+                }}
+              >
                 {this.state.columns.map((item, index) => {
                   return (
                     <Option value={item} key={index}>
@@ -270,7 +314,13 @@ class Home extends React.Component<HomeProps, HomeState> {
               <label>
                 Region<i style={{ color: "#696464", paddingLeft: "9px" }}>- e.g. California or CA</i>
               </label>
-              <Select defaultValue="--">
+              <Select
+                defaultValue={this.state.regionColumn}
+                value={this.state.regionColumn}
+                onChange={value => {
+                  this.setState({ regionColumn: value });
+                }}
+              >
                 {this.state.columns.map((item, index) => {
                   return (
                     <Option value={item} key={index}>
@@ -284,7 +334,13 @@ class Home extends React.Component<HomeProps, HomeState> {
               <label>
                 Postal Code<i style={{ color: "#696464", paddingLeft: "9px" }}>- e.g. 94131</i>
               </label>
-              <Select defaultValue="--">
+              <Select
+                defaultValue={this.state.postalCodeColumn}
+                value={this.state.postalCodeColumn}
+                onChange={value => {
+                  this.setState({ postalCodeColumn: value });
+                }}
+              >
                 {this.state.columns.map((item, index) => {
                   return (
                     <Option value={item} key={index}>
@@ -298,7 +354,13 @@ class Home extends React.Component<HomeProps, HomeState> {
               <label>
                 Location Name<i style={{ color: "#696464", paddingLeft: "9px" }}>- e.g. Twin Peaks Petroleum</i>
               </label>
-              <Select defaultValue="--">
+              <Select
+                defaultValue={this.state.locationNameColumn}
+                value={this.state.locationNameColumn}
+                onChange={value => {
+                  this.setState({ locationNameColumn: value });
+                }}
+              >
                 {this.state.columns.map((item, index) => {
                   return (
                     <Option value={item} key={index}>
@@ -312,7 +374,13 @@ class Home extends React.Component<HomeProps, HomeState> {
               <label>
                 Latitude<i style={{ color: "#696464", paddingLeft: "9px" }}>- e.g. 37.7371</i>
               </label>
-              <Select defaultValue="--">
+              <Select
+                defaultValue={this.state.latitudeColumn}
+                value={this.state.latitudeColumn}
+                onChange={value => {
+                  this.setState({ latitudeColumn: value });
+                }}
+              >
                 {this.state.columns.map((item, index) => {
                   return (
                     <Option value={item} key={index}>
@@ -326,7 +394,13 @@ class Home extends React.Component<HomeProps, HomeState> {
               <label>
                 Longitude<i style={{ color: "#696464", paddingLeft: "9px" }}>- e.g. -122.44283</i>
               </label>
-              <Select defaultValue="--">
+              <Select
+                defaultValue={this.state.longitudeColumn}
+                value={this.state.longitudeColumn}
+                onChange={value => {
+                  this.setState({ longitudeColumn: value });
+                }}
+              >
                 {this.state.columns.map((item, index) => {
                   return (
                     <Option value={item} key={index}>
@@ -340,7 +414,13 @@ class Home extends React.Component<HomeProps, HomeState> {
               <label>
                 Country<i style={{ color: "#696464", paddingLeft: "9px" }}>- e.g. US</i>
               </label>
-              <Select defaultValue="--">
+              <Select
+                defaultValue={this.state.countryColumn}
+                value={this.state.countryColumn}
+                onChange={value => {
+                  this.setState({ countryColumn: value });
+                }}
+              >
                 {this.state.columns.map((item, index) => {
                   return (
                     <Option value={item} key={index}>
