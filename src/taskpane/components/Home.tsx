@@ -480,7 +480,7 @@ class Home extends React.Component<HomeProps, HomeState> {
                   if (key[n] == "latitude" || key[n] == "longitude") {
                     data.queries[y][key[n]] = parseFloat(rows[k][colsId[n]]);
                   } else {
-                    data.queries[y][key[n]] = rows[k][colsId[n]];
+                    data.queries[y][key[n]] = (rows[k][colsId[n]]).toString();
                   }
                 }
               }
