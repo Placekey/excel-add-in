@@ -3,6 +3,7 @@ import * as React from "react";
 import ReactDOM = require("react-dom");
 import Auth from "./Auth";
 import { FormInstance } from "antd/lib/form";
+import axioConnectorInstance from "../../services/AxioConnector";
 
 const { Title } = Typography;
 
@@ -14,6 +15,7 @@ export interface HomeState {
   columns: any[];
   allSheets: any[];
   activeSheet: string;
+  rangeOfSheet: string;
   isDataLoading: boolean;
   isEmptyDataView: string;
   isFillDataView: string;
@@ -30,8 +32,14 @@ export interface HomeState {
   isInsertError: boolean;
   isOverwrite: boolean;
 
+  overWriteDisabled: boolean;
+
   isGenerateButtonDisabled: boolean;
   progressMessage: string;
+
+  rowsData : any[];
+  rowCount: number;
+  columnCount: number;
 }
 
 class Home extends React.Component<HomeProps, HomeState> {
@@ -43,6 +51,7 @@ class Home extends React.Component<HomeProps, HomeState> {
       columns: ["--"],
       allSheets: [],
       activeSheet: "",
+      rangeOfSheet: "",
       isDataLoading: true,
       isEmptyDataView: "none",
       isFillDataView: "none",
@@ -58,8 +67,12 @@ class Home extends React.Component<HomeProps, HomeState> {
       isNameMatch: false,
       isInsertError: false,
       isOverwrite: false,
+      overWriteDisabled: false,
       isGenerateButtonDisabled: false,
-      progressMessage: ""
+      progressMessage: "",
+      rowsData: [],
+      rowCount: 0,
+      columnCount: 0
     };
   }
 
@@ -115,6 +128,7 @@ class Home extends React.Component<HomeProps, HomeState> {
           if (lastChars == "!A1") {
             that.setState({ isEmptyDataView: "block", isDataLoading: false });
           } else {
+            that.setState({ rangeOfSheet: range.address });
             that.getRows(worksheetName, range.address);
           }
         } catch (e) {
@@ -141,6 +155,11 @@ class Home extends React.Component<HomeProps, HomeState> {
           } else {
             allColumns = that.state.columns;
           }
+
+          if (allColumns.some(x => x === "Placekey")) {
+            that.setState({ isOverwrite: true, overWriteDisabled: false });
+          }
+
           that.setState({ columns: allColumns, isFillDataView: "block", isDataLoading: false });
         }
       });
@@ -185,7 +204,13 @@ class Home extends React.Component<HomeProps, HomeState> {
   onChangeActiveSheet = value => {
     var that = this;
     console.log(value);
-    this.setState({ activeSheet: value, isEmptyDataView: "none", isFillDataView: "none", isDataLoading: true });
+    this.setState({
+      activeSheet: value,
+      isEmptyDataView: "none",
+      isFillDataView: "none",
+      isDataLoading: true,
+      isOverwrite: false
+    });
     Excel.run(function(context) {
       var sheet = context.workbook.worksheets.getItem(value);
       sheet.activate();
@@ -201,6 +226,7 @@ class Home extends React.Component<HomeProps, HomeState> {
     const authKey = Office.context.document.settings.get("placeKeyToken");
     if (authKey) {
       if (authKey) {
+        this.setState({ columns: [] });
         await this.getWorkSheets();
       }
     } else {
@@ -232,7 +258,7 @@ class Home extends React.Component<HomeProps, HomeState> {
       this.setState({ isOverwrite: e.target.checked });
     };
 
-    const onGeneratePlaceKey = () => {
+    const onGeneratePlaceKey = async () => {
       this.setState({ isGenerateButtonDisabled: true });
       if (
         (this.state.streetColumn == "--" || this.state.regionColumn == "--") &&
@@ -273,14 +299,372 @@ class Home extends React.Component<HomeProps, HomeState> {
         }
       }
 
-      this.setState({progressMessage: "Working..."});
+      this.setState({ progressMessage: "Working..." });
 
-      setTimeout(
-        () => this.setState({progressMessage: "Please wait..."}), 
-        1000
-      );
+      setTimeout(() => this.setState({ progressMessage: "Please wait..." }), 1000);
+
+      columns.push(this.state.isAddressMatch, this.state.isNameMatch, this.state.isOverwrite, this.state.isInsertError);
+
+      await generatePlaceKeys(columns);
+
       this.setState({ isGenerateButtonDisabled: false });
       return false;
+    };
+
+    const generatePlaceKeys = async columns => {
+      var that = this;
+      let rowCount = 0;
+      let columnCount = 0;
+
+      Excel.run(function(context) {
+        let sheet = context.workbook.worksheets.getItem(that.state.activeSheet);
+        let uRange = sheet.getUsedRange();
+        uRange.load(["rowCount", "columnCount"]);
+
+        return context.sync().then(function() {
+          rowCount = uRange.rowCount;
+          columnCount = uRange.columnCount;
+          that.setState({rowCount: rowCount, columnCount: columnCount})
+          getRows(rowCount, columnCount, columns);
+        });
+      }).catch(this.errorHandlerFunction);
+    };
+
+    const getRows = (rowCount, columnCount, columns) => {
+      var that = this;
+      Excel.run(function(context) {
+        let sheet = context.workbook.worksheets.getItem(that.state.activeSheet);
+        let columnLetter: string = numberToLetter(columnCount);
+        var range = sheet.getRange("A2:"+columnLetter+rowCount);
+        range.load("values");
+
+        return context.sync().then(function() {
+          var rows = range.values;
+          that.setState({rowsData: range.values});
+          placeKeyAPIAndInsertData(rowCount, columnCount, rows, columns);
+        });
+      }).catch(this.errorHandlerFunction);
+    }
+
+    const placeKeyAPIAndInsertData = (rowCount, columnCount, rows, columns) =>{
+      var that = this;
+      Excel.run(function(context) {
+        let sheet = context.workbook.worksheets.getItem(that.state.activeSheet);
+
+        var range = sheet.getRange(that.state.rangeOfSheet);
+        range.load("values");
+
+        let colsId = [];
+        let key = [
+          "street_address",
+          "city",
+          "region",
+          "postal_code",
+          "location_name",
+          "latitude",
+          "longitude",
+          "iso_country_code"
+        ];
+        var PlacekeyColumnId = 0;
+
+        sheet.load("name");
+        return context.sync().then(async function() {
+          var rangeCol = range.values[0];
+
+          console.log(rangeCol);
+
+          for (var i = 0; i < columns.length - 2; i++) {
+            for (var j = 0; j < columnCount; j++) {
+              if (columns[i] == rangeCol[j]) {
+                colsId.push(j);
+                break;
+              }
+              if (columns[i] == "--") {
+                colsId.push("--");
+                break;
+              }
+            }
+          }
+
+          for (var j = 0; j < columnCount; j++) {
+            if (rangeCol[0][j] == "Placekey") {
+              PlacekeyColumnId = j;
+              break;
+            }
+          }
+
+          // Check if there are more than 90 records on the sheet and prepare chunks
+
+          var chunks = [];
+
+          var divided = rowCount / 90;
+          var floorDivided = Math.ceil(divided);
+          for (var j = 0; j < floorDivided; j++) {
+            if (j + 1 == floorDivided) {
+              // information in chunks for each item contains: [where it starts, where it ends, how many in chunk]
+
+              chunks[j] = [
+                j * 90,
+                j * 90 + (rowCount - (floorDivided - 1) * 90) - 1,
+                rowCount - (floorDivided - 1) * 90 - 1
+              ];
+            } else {
+              chunks[j] = [j * 90, j * 90 + 90, 90];
+            }
+          }
+
+          console.log(chunks);
+          var totalPlaceKeys = 0;
+
+          // start looking at chunks of rows
+
+          for (var v = 0; v < chunks.length; v++) {
+            console.log(chunks[v][0]);
+            console.log(chunks[v][1]);
+
+            var data = {
+              queries: [],
+              options: {
+                strict_address_match: columns[8],
+                strict_name_match: columns[9]
+              }
+            };
+            var problematicRows = [];
+            var y = 0;
+            //var start = chunks[v][0];
+            //var end = chunks[v][1];
+            var eachRowResponse = [];
+            var errors = [];
+            var parsed = null;
+
+            setTimeout(() => {
+              console.log("chunck calling");
+            }, 1000);
+
+            var countProblem = -1;
+
+            // processing specific chunk and building queries for each row
+
+            for (var k = chunks[v][0]; k < chunks[v][1]; k++) {
+              countProblem++;
+              // If there are empty cells in a row, that's problematic, Bulk API will not process any query if there is one problematic.
+              // therfore, we will check and exclude those rows before requesting for Placekeys.
+              console.log(
+                rows[k][colsId[0]],
+                rows[k][colsId[1]],
+                rows[k][colsId[2]],
+                rows[k][colsId[3]],
+                rows[k][colsId[5]],
+                rows[k][colsId[6]]
+              );
+              if (
+                (rows[k][colsId[0]] == "" ||
+                  rows[k][colsId[2]] == "" ||
+                  rows[k][colsId[0]] == null ||
+                  rows[k][colsId[2]] == null) &&
+                (rows[k][colsId[5]] == "" ||
+                  rows[k][colsId[6]] == "" ||
+                  rows[k][colsId[5]] == null ||
+                  rows[k][colsId[6]] == null)
+              ) {
+                problematicRows[k] = countProblem;
+
+                continue;
+              }
+              data.queries[y] = {};
+
+              // continue bulding queries, some values need to be placed as integer
+
+              for (var n = 0; n < colsId.length; n++) {
+                if (rows[k][colsId[n]] != "" && colsId[n] != "--") {
+                  data.queries[y][key[n]] = {};
+
+                  if (key[n] == "latitude" || key[n] == "longitude") {
+                    data.queries[y][key[n]] = parseFloat(rows[k][colsId[n]]);
+                  } else {
+                    data.queries[y][key[n]] = rows[k][colsId[n]];
+                  }
+                }
+              }
+              if (rows[k][colsId[7]] == null || rows[k][colsId[7]] == "") {
+                data.queries[y]["iso_country_code"] = "US";
+              }
+
+              data.queries[y]["query_id"] = k + "1";
+              y = y + 1;
+            }
+            console.log(data);
+
+            // Finish building queries ^^^^^^^^
+            // start requesting for Placekeys
+
+            const authKey = Office.context.document.settings.get("placeKeyToken");
+            var API_Key = authKey;
+            var params = {   
+              headers: {
+                apikey: API_Key,
+                muteHttpExceptions: true
+              }
+            };
+            var response: any = await axioConnectorInstance.post("/placekeys", data, params);
+
+            console.log(response);
+            var parsed = JSON.parse(response);
+            var eachRowResponse = [];
+            var errors = [];
+            //var totalPlaceKeys = 0;
+            console.log("parsed response" + response);
+            console.log("code response" + response.getResponseCode());
+
+            try {
+              if (response.getResponseCode() == 429) {
+                v = v - 1;
+                setTimeout(() => {
+                  console.log("chunck calling");
+                }, 5000);
+                continue;
+              }
+            } catch (e) {}
+
+            // All batch error replacment
+
+            if (response.getResponseCode() == 400) {
+              for (var i = 0; i < chunks[v][1] - chunks[v][0]; i++) {
+                if (1 == 1) {
+                  if (columns[11] == false) {
+                    eachRowResponse[i] = ["Invalid address"];
+                  } else {
+                    eachRowResponse.splice(i, 0, [""]);
+                    errors[i] = ["Invalid address"];
+                  }
+                } else {
+                  totalPlaceKeys = totalPlaceKeys + 1;
+
+                  if (columns[11] == false) {
+                    eachRowResponse[i] = ["Invalid address"];
+                  } else {
+                    eachRowResponse[i] = ["Invalid address"];
+
+                    errors.splice(i, 0, [""]);
+                  }
+                }
+              }
+            }
+            //^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            for (var i = 0; i < parsed.length; i++) {
+              if (parsed[i]["placekey"] == null) {
+                if (columns[11] == false) {
+                  eachRowResponse[i] = [parsed[i]["error"]];
+                } else {
+                  eachRowResponse.splice(i, 0, [""]);
+                  errors[i] = [parsed[i]["error"]];
+                }
+              } else {
+                totalPlaceKeys = totalPlaceKeys + 1;
+
+                if (columns[11] == false) {
+                  eachRowResponse[i] = [parsed[i]["placekey"]];
+                } else {
+                  eachRowResponse[i] = [parsed[i]["placekey"]];
+
+                  errors.splice(i, 0, [""]);
+                }
+              }
+            }
+
+            console.log(problematicRows);
+            console.log("row response: " + eachRowResponse);
+            console.log("error: " + errors);
+
+            // We insert problematic rows to final result
+
+            for (var i = 0; i < problematicRows.length; i++) {
+              if (problematicRows[i] == null) {
+                continue;
+              }
+              if (columns[11] == false) {
+                eachRowResponse.splice(problematicRows[i], 0, ["Incomplete address"]);
+              } else {
+                errors.splice(problematicRows[i], 0, ["Incomplete address"]);
+                eachRowResponse.splice(problematicRows[i], 0, [""]);
+              }
+            }
+            console.log("row response: " + eachRowResponse);
+            console.log("error: " + errors);
+
+            // If there is not we create one column and insert result.
+
+            // if (PlacekeyColumnId == 0 || columns[10] == false) {
+            //   try {
+            //     console.log(chunks[v][0] + 2);
+            //     console.log(chunks[v][1]);
+            //     console.log(columnCount);
+            //     var ss = context.workbook.worksheets.getItem(that.state.activeSheet);
+            //     var range = ss.getRange(start + 2, columnCount + 1, chunks[v][2], 1);
+            //     range.setValues(eachRowResponse);
+            //     if (columns[11] == true) {
+            //       ss.getRange(1, columnCount + 2).setValue("Errors");
+            //       ss.getRange(chunks[v][0] + 2, columnCount + 2, chunks[v][2], 1).setValues(errors);
+            //     }
+            //   } catch (e) {
+            //     // SpreadsheetApp.getUi().alert(e);
+
+            //     if (columns[11] == false) {
+            //       ss.getRange(chunks[v][0] + 2, columnCount + 1, chunks[v][2] + 2, 1).setValue(parsed["message"]);
+            //     } else {
+            //       ss.getRange(chunks[v][0] + 2, columnCount + 2, chunks[v][2] + 2, 1).setValue(parsed["message"]);
+            //     }
+            //   }
+            // } else {
+            //   try {
+            //     if (columns[11] == false) {
+            //       ss.getRange(chunks[v][0] + 2, PlacekeyColumnId + 1, chunks[v][2], 1).setValues(eachRowResponse);
+            //     } else {
+            //       ss.getRange(chunks[v][0] + 2, PlacekeyColumnId + 1, chunks[v][2], 1).setValues(eachRowResponse);
+            //       ss.getRange(chunks[v][0] + 2, PlacekeyColumnId + 2, chunks[v][2], 1).setValues(errors);
+            //     }
+            //   } catch (e) {
+            //     //  totalPlaceKeys = 0;
+            //     if (columns[11] == false) {
+            //       ss.getRange(chunks[v][0] + 2, PlacekeyColumnId + 1, chunks[v][2], 1).setValue(parsed["message"]);
+            //     } else {
+            //       ss.getRange(chunks[v][0] + 2, PlacekeyColumnId + 2, chunks[v][2], 1).setValue(parsed["message"]);
+            //     }
+            //   }
+            // }
+          }
+
+          if (PlacekeyColumnId == 0 || columns[10] == false) {
+            Excel.run(function(context) {
+              let sheet = context.workbook.worksheets.getItem(that.state.activeSheet);
+
+              let lastColumnLetter = numberToLetter(columnCount + 1);
+
+              var range = sheet.getRange(lastColumnLetter + "1");
+              range.values = [["Placekey"]];
+              range.format.autofitColumns();
+
+              return context.sync();
+            }).catch(that.errorHandlerFunction);
+          }
+
+          console.log(`The problemetic row is "${problematicRows}"`);
+          console.log(`The key row is "${key}"`);
+          console.log(`The placekeycolumn row is "${PlacekeyColumnId}"`);
+          console.log(`The row is "${rowCount}"`);
+          console.log(`The column is "${columnCount}"`);
+          console.log(`The worksheet is "${sheet.name}"`);
+        });
+      }).catch(this.errorHandlerFunction);
+    }
+
+    const numberToLetter = num => {
+      if (num < 1 || num > 26 || typeof num !== "number") {
+        return "";
+      }
+      const leveller = 64;
+      //since actually A is represented by 65 and we want to represent it
+      return String.fromCharCode(num + leveller);
     };
 
     const countInArray = (array, what) => {
@@ -495,19 +879,40 @@ class Home extends React.Component<HomeProps, HomeState> {
               </Select>
             </Form.Item>
             <div style={{ marginTop: "20px", marginBottom: "20px" }}>
-              <Checkbox onChange={onAddressChange} name="addressMatch" style={{ padding: "5px" }}>
+              <Checkbox
+                onChange={onAddressChange}
+                checked={this.state.isAddressMatch}
+                name="addressMatch"
+                style={{ padding: "5px" }}
+              >
                 {" "}
                 Check for exact address matches only
               </Checkbox>
-              <Checkbox onChange={onNameMatchChange} name="nameMatch" style={{ padding: "5px" }}>
+              <Checkbox
+                onChange={onNameMatchChange}
+                checked={this.state.isNameMatch}
+                name="nameMatch"
+                style={{ padding: "5px" }}
+              >
                 {" "}
                 Check for exact name matches only
               </Checkbox>
-              <Checkbox onChange={onInssertErrorChange} name="insertError" style={{ padding: "5px" }}>
+              <Checkbox
+                onChange={onInssertErrorChange}
+                checked={this.state.isInsertError}
+                name="insertError"
+                style={{ padding: "5px" }}
+              >
                 {" "}
                 Insert errors in new column
               </Checkbox>
-              <Checkbox onChange={onOverwriteChange} name="overwritePlacekey" style={{ padding: "5px" }}>
+              <Checkbox
+                onChange={onOverwriteChange}
+                disabled={this.state.overWriteDisabled}
+                checked={this.state.isOverwrite}
+                name="overwritePlacekey"
+                style={{ padding: "5px" }}
+              >
                 {" "}
                 <span style={{ fontWeight: "bolder" }}>Overwrite existing Placekey column</span>
               </Checkbox>
@@ -529,7 +934,9 @@ class Home extends React.Component<HomeProps, HomeState> {
               </Button>
             </div>
             <br />
-            <div id="generateToast" style={{fontStyle: "itali", color: "#484852", marginLeft: "8px"}}>{this.state.progressMessage}</div>
+            <div id="generateToast" style={{ fontStyle: "itali", color: "#484852", marginLeft: "8px" }}>
+              {this.state.progressMessage}
+            </div>
           </Form>
         </div>
         <div>
