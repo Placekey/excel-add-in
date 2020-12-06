@@ -149,11 +149,9 @@ class Home extends React.Component<HomeProps, HomeState> {
         var lastChars = rangeVal.substr(rangeVal.length - 3);
         if (lastChars != "!A1") {
           var rangeCol = range.values[0];
-          var allColumns: any = [];
+          var allColumns: any = ["--"];
           if (rangeCol.length > 0) {
-            allColumns = that.state.columns.concat(rangeCol);
-          } else {
-            allColumns = that.state.columns;
+            allColumns.push(...rangeCol);
           }
 
           if (allColumns.some(x => x === "Placekey")) {
@@ -509,15 +507,14 @@ class Home extends React.Component<HomeProps, HomeState> {
             var response: any = await axioConnectorInstance.post("/placekeys", data, params);
 
             console.log(response);
-            var parsed = JSON.parse(response);
+            var parsed = response.data;
             var eachRowResponse = [];
             var errors = [];
             //var totalPlaceKeys = 0;
             console.log("parsed response" + response);
-            console.log("code response" + response.getResponseCode());
 
             try {
-              if (response.getResponseCode() == 429) {
+              if (response.status == 429) {
                 v = v - 1;
                 setTimeout(() => {
                   console.log("chunck calling");
@@ -528,7 +525,7 @@ class Home extends React.Component<HomeProps, HomeState> {
 
             // All batch error replacment
 
-            if (response.getResponseCode() == 400) {
+            if (response.status == 400) {
               for (var i = 0; i < chunks[v][1] - chunks[v][0]; i++) {
                 if (1 == 1) {
                   if (columns[11] == false) {

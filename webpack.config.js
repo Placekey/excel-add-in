@@ -43,7 +43,7 @@ module.exports = async (env, options)  => {
           use: ['style-loader', 'css-loader']
         },
         {
-          test: /\.(png|jpg|jpeg|gif)$/,
+          test: /\.(png|jpg|jpeg|gif|svg)$/,
           loader: "file-loader",
           options: {
             name: '[path][name].[ext]',          
@@ -60,8 +60,8 @@ module.exports = async (env, options)  => {
           from: "./src/taskpane/taskpane.css"
         },
         {
-          to: "[name]." + buildType + ".[ext]",
-          from: "manifest*.xml",
+          to: "[name].[ext]",
+          from: "manifest.xml",
           transform(content) {
             if (dev) {
               return content;

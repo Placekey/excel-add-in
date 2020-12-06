@@ -3,7 +3,9 @@ import Progress from "./Progress";
 // images references in the manifest
 import "../../../assets/ribbon-ico-16.png";
 import "../../../assets/ribbon-ico-32.png";
+import "../../../assets/ribbon-ico-64.png";
 import "../../../assets/ribbon-ico-80.png";
+import "../../../assets/placekey-logo.svg";
 import Initial from "./Initial";
 /* global Button, console, Excel, Header, HeroList, HeroListItem, Progress */
 
@@ -55,7 +57,7 @@ export default class App extends React.Component<AppProps, AppState> {
 
     if (!isOfficeInitialized) {
       return (
-        <Progress title={title} logo="assets/logo-filled.png" message="Please sideload your addin to see app body." />
+        <Progress title={title} message="Please sideload your addin to see app body." />
       );
     }
 
