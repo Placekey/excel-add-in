@@ -67,7 +67,7 @@ class Home extends React.Component<HomeProps, HomeState> {
       isNameMatch: false,
       isInsertError: false,
       isOverwrite: false,
-      overWriteDisabled: false,
+      overWriteDisabled: true,
       isGenerateButtonDisabled: false,
       progressMessage: "",
       rowsData: [],
@@ -386,6 +386,7 @@ class Home extends React.Component<HomeProps, HomeState> {
 
           for (var j = 0; j < columnCount; j++) {
             if (rangeCol[j] == "Placekey") {
+              that.setState({overWriteDisabled: false});
               PlacekeyColumnId = j;
               break;
             }
@@ -597,7 +598,7 @@ class Home extends React.Component<HomeProps, HomeState> {
                 console.log(chunks[v][1]);
                 console.log(columnCount);
 
-                await insertToNewColumn(columnCount, chunks[v][0], chunks[v][2], eachRowResponse, columns, errors);
+                await insertToNewColumn(columnCount, chunks[v][0], chunks[v][2], eachRowResponse, columns, errors, totalPlaceKeys);
               } catch (e) {
                 // if (columns[11] == false) {
                 //   ss.getRange(chunks[v][0] + 2, columnCount + 1, chunks[v][2] + 2, 1).setValue(parsed["message"]);
@@ -647,7 +648,7 @@ class Home extends React.Component<HomeProps, HomeState> {
       }).catch(this.errorHandlerFunction);
     };
 
-    const insertToNewColumn = async (columnCount, startRow, endRow, eachRowResponse, columns, errors) => {
+    const insertToNewColumn = async (columnCount, startRow, endRow, eachRowResponse, columns, errors, totalPlaceKeys) => {
       var that = this;
       Excel.run(function(context) {
         let sheet = context.workbook.worksheets.getItem(that.state.activeSheet);
@@ -682,6 +683,10 @@ class Home extends React.Component<HomeProps, HomeState> {
 
             range.format.autofitColumns();
           }
+        }
+
+        if(totalPlaceKeys > 0) {
+          setTimeout(() => that.setState({ progressMessage: "Done! Generated "+ totalPlaceKeys+ " Placekeys." }), 5000);
         }
 
         return context.sync();
