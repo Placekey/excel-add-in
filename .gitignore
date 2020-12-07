@@ -117,3 +117,7 @@ dist
 ### VisualStudioCode Patch ###
 # Ignore all local history of files
 **/.history
+
+
+### OS files ###
+.DS_Store
