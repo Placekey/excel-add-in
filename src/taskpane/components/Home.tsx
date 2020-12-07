@@ -37,7 +37,7 @@ export interface HomeState {
   isGenerateButtonDisabled: boolean;
   progressMessage: string;
 
-  rowsData : any[];
+  rowsData: any[];
   rowCount: number;
   columnCount: number;
 }
@@ -322,7 +322,7 @@ class Home extends React.Component<HomeProps, HomeState> {
         return context.sync().then(function() {
           rowCount = uRange.rowCount;
           columnCount = uRange.columnCount;
-          that.setState({rowCount: rowCount, columnCount: columnCount})
+          that.setState({ rowCount: rowCount, columnCount: columnCount });
           getRows(rowCount, columnCount, columns);
         });
       }).catch(this.errorHandlerFunction);
@@ -333,18 +333,18 @@ class Home extends React.Component<HomeProps, HomeState> {
       Excel.run(function(context) {
         let sheet = context.workbook.worksheets.getItem(that.state.activeSheet);
         let columnLetter: string = numberToLetter(columnCount);
-        var range = sheet.getRange("A2:"+columnLetter+rowCount);
+        var range = sheet.getRange("A2:" + columnLetter + rowCount);
         range.load("values");
 
         return context.sync().then(function() {
           var rows = range.values;
-          that.setState({rowsData: range.values});
+          that.setState({ rowsData: range.values });
           placeKeyAPIAndInsertData(rowCount, columnCount, rows, columns);
         });
       }).catch(this.errorHandlerFunction);
-    }
+    };
 
-    const placeKeyAPIAndInsertData = (rowCount, columnCount, rows, columns) =>{
+    const placeKeyAPIAndInsertData = (rowCount, columnCount, rows, columns) => {
       var that = this;
       Excel.run(function(context) {
         let sheet = context.workbook.worksheets.getItem(that.state.activeSheet);
@@ -385,7 +385,7 @@ class Home extends React.Component<HomeProps, HomeState> {
           }
 
           for (var j = 0; j < columnCount; j++) {
-            if (rangeCol[0][j] == "Placekey") {
+            if (rangeCol[j] == "Placekey") {
               PlacekeyColumnId = j;
               break;
             }
@@ -480,7 +480,7 @@ class Home extends React.Component<HomeProps, HomeState> {
                   if (key[n] == "latitude" || key[n] == "longitude") {
                     data.queries[y][key[n]] = parseFloat(rows[k][colsId[n]]);
                   } else {
-                    data.queries[y][key[n]] = (rows[k][colsId[n]]).toString();
+                    data.queries[y][key[n]] = rows[k][colsId[n]].toString();
                   }
                 }
               }
@@ -498,7 +498,7 @@ class Home extends React.Component<HomeProps, HomeState> {
 
             const authKey = Office.context.document.settings.get("placeKeyToken");
             var API_Key = authKey;
-            var params = {   
+            var params = {
               headers: {
                 apikey: API_Key,
                 muteHttpExceptions: true
@@ -589,46 +589,38 @@ class Home extends React.Component<HomeProps, HomeState> {
             console.log("row response: " + eachRowResponse);
             console.log("error: " + errors);
 
-            // If there is not we create one column and insert result.
+            //If there is not we create one column and insert result.
 
-            // if (PlacekeyColumnId == 0 || columns[10] == false) {
-            //   try {
-            //     console.log(chunks[v][0] + 2);
-            //     console.log(chunks[v][1]);
-            //     console.log(columnCount);
-            //     var ss = context.workbook.worksheets.getItem(that.state.activeSheet);
-            //     var range = ss.getRange(start + 2, columnCount + 1, chunks[v][2], 1);
-            //     range.setValues(eachRowResponse);
-            //     if (columns[11] == true) {
-            //       ss.getRange(1, columnCount + 2).setValue("Errors");
-            //       ss.getRange(chunks[v][0] + 2, columnCount + 2, chunks[v][2], 1).setValues(errors);
-            //     }
-            //   } catch (e) {
-            //     // SpreadsheetApp.getUi().alert(e);
+            if (PlacekeyColumnId == 0 || columns[10] == false) {
+              try {
+                console.log(chunks[v][0] + 2);
+                console.log(chunks[v][1]);
+                console.log(columnCount);
 
-            //     if (columns[11] == false) {
-            //       ss.getRange(chunks[v][0] + 2, columnCount + 1, chunks[v][2] + 2, 1).setValue(parsed["message"]);
-            //     } else {
-            //       ss.getRange(chunks[v][0] + 2, columnCount + 2, chunks[v][2] + 2, 1).setValue(parsed["message"]);
-            //     }
-            //   }
-            // } else {
-            //   try {
-            //     if (columns[11] == false) {
-            //       ss.getRange(chunks[v][0] + 2, PlacekeyColumnId + 1, chunks[v][2], 1).setValues(eachRowResponse);
-            //     } else {
-            //       ss.getRange(chunks[v][0] + 2, PlacekeyColumnId + 1, chunks[v][2], 1).setValues(eachRowResponse);
-            //       ss.getRange(chunks[v][0] + 2, PlacekeyColumnId + 2, chunks[v][2], 1).setValues(errors);
-            //     }
-            //   } catch (e) {
-            //     //  totalPlaceKeys = 0;
-            //     if (columns[11] == false) {
-            //       ss.getRange(chunks[v][0] + 2, PlacekeyColumnId + 1, chunks[v][2], 1).setValue(parsed["message"]);
-            //     } else {
-            //       ss.getRange(chunks[v][0] + 2, PlacekeyColumnId + 2, chunks[v][2], 1).setValue(parsed["message"]);
-            //     }
-            //   }
-            // }
+                await insertToNewColumn(columnCount, chunks[v][0], chunks[v][2], eachRowResponse, columns, errors);
+              } catch (e) {
+                // if (columns[11] == false) {
+                //   ss.getRange(chunks[v][0] + 2, columnCount + 1, chunks[v][2] + 2, 1).setValue(parsed["message"]);
+                // } else {
+                //   ss.getRange(chunks[v][0] + 2, columnCount + 2, chunks[v][2] + 2, 1).setValue(parsed["message"]);
+                // }
+              }
+            } else {
+              try {
+                // if (columns[11] == false) {
+                //   ss.getRange(chunks[v][0] + 2, PlacekeyColumnId + 1, chunks[v][2], 1).setValues(eachRowResponse);
+                // } else {
+                //   ss.getRange(chunks[v][0] + 2, PlacekeyColumnId + 1, chunks[v][2], 1).setValues(eachRowResponse);
+                //   ss.getRange(chunks[v][0] + 2, PlacekeyColumnId + 2, chunks[v][2], 1).setValues(errors);
+                // }
+              } catch (e) {
+                // if (columns[11] == false) {
+                //   ss.getRange(chunks[v][0] + 2, PlacekeyColumnId + 1, chunks[v][2], 1).setValue(parsed["message"]);
+                // } else {
+                //   ss.getRange(chunks[v][0] + 2, PlacekeyColumnId + 2, chunks[v][2], 1).setValue(parsed["message"]);
+                // }
+              }
+            }
           }
 
           if (PlacekeyColumnId == 0 || columns[10] == false) {
@@ -653,7 +645,48 @@ class Home extends React.Component<HomeProps, HomeState> {
           console.log(`The worksheet is "${sheet.name}"`);
         });
       }).catch(this.errorHandlerFunction);
-    }
+    };
+
+    const insertToNewColumn = async (columnCount, startRow, endRow, eachRowResponse, columns, errors) => {
+      var that = this;
+      Excel.run(function(context) {
+        let sheet = context.workbook.worksheets.getItem(that.state.activeSheet);
+
+        let lastColumnLetter = numberToLetter(columnCount + 1);
+        let errorColumnLetter = numberToLetter(columnCount + 2);
+
+        let start = startRow + 2;
+        let rowCount = endRow + 1;
+
+        var responseCount = 0;
+        for (var i = start; i < rowCount + 1; i++) {
+          var range = sheet.getRange(lastColumnLetter + "" + i + "");
+          var aa = eachRowResponse[responseCount][0];
+          console.log(aa);
+          range.values = [[eachRowResponse[responseCount][0]]];
+          responseCount++;
+        }
+
+        if (columns[11] == true) {
+          var range = sheet.getRange(errorColumnLetter + "1");
+          range.values = [["Errors"]];
+          range.format.autofitColumns();
+
+          var responseCount = 0;
+          for (var i = start; i < rowCount + 1; i++) {
+            var range = sheet.getRange(errorColumnLetter + "" + i + "");
+            var aa = eachRowResponse[responseCount][0];
+            console.log(aa);
+            range.values = [[errors[responseCount][0]]];
+            responseCount++;
+
+            range.format.autofitColumns();
+          }
+        }
+
+        return context.sync();
+      }).catch(that.errorHandlerFunction);
+    };
 
     const numberToLetter = num => {
       if (num < 1 || num > 26 || typeof num !== "number") {
