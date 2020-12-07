@@ -600,26 +600,21 @@ class Home extends React.Component<HomeProps, HomeState> {
 
                 await insertToNewColumn(columnCount, chunks[v][0], chunks[v][2], eachRowResponse, columns, errors, totalPlaceKeys);
               } catch (e) {
-                // if (columns[11] == false) {
-                //   ss.getRange(chunks[v][0] + 2, columnCount + 1, chunks[v][2] + 2, 1).setValue(parsed["message"]);
-                // } else {
-                //   ss.getRange(chunks[v][0] + 2, columnCount + 2, chunks[v][2] + 2, 1).setValue(parsed["message"]);
-                // }
+                if (columns[11] == false) {
+                  insertErrors(columnCount+ 1, chunks[v][0], chunks[v][2], parsed.message);
+                } else {
+                  insertErrors(columnCount+ 2, chunks[v][0], chunks[v][2], parsed.message);
+                }
               }
             } else {
               try {
-                // if (columns[11] == false) {
-                //   ss.getRange(chunks[v][0] + 2, PlacekeyColumnId + 1, chunks[v][2], 1).setValues(eachRowResponse);
-                // } else {
-                //   ss.getRange(chunks[v][0] + 2, PlacekeyColumnId + 1, chunks[v][2], 1).setValues(eachRowResponse);
-                //   ss.getRange(chunks[v][0] + 2, PlacekeyColumnId + 2, chunks[v][2], 1).setValues(errors);
-                // }
+                await insertToExistingColumn(PlacekeyColumnId, chunks[v][0], chunks[v][2], eachRowResponse, columns, errors, totalPlaceKeys);
               } catch (e) {
-                // if (columns[11] == false) {
-                //   ss.getRange(chunks[v][0] + 2, PlacekeyColumnId + 1, chunks[v][2], 1).setValue(parsed["message"]);
-                // } else {
-                //   ss.getRange(chunks[v][0] + 2, PlacekeyColumnId + 2, chunks[v][2], 1).setValue(parsed["message"]);
-                // }
+                if (columns[11] == false) {
+                  insertErrors(PlacekeyColumnId + 1, chunks[v][0], chunks[v][2], parsed.message);
+                } else {
+                  insertErrors(PlacekeyColumnId + 2, chunks[v][0], chunks[v][2], parsed.message);
+                }
               }
             }
           }
@@ -686,9 +681,74 @@ class Home extends React.Component<HomeProps, HomeState> {
         }
 
         if(totalPlaceKeys > 0) {
-          setTimeout(() => that.setState({ progressMessage: "Done! Generated "+ totalPlaceKeys+ " Placekeys." }), 5000);
+          setTimeout(() => that.setState({ progressMessage: "Done! Generated "+ totalPlaceKeys+ " Placekeys.", overWriteDisabled: false }), 5000);
         }
 
+        return context.sync();
+      }).catch(that.errorHandlerFunction);
+    };
+
+    const insertToExistingColumn = async (columnCount, startRow, endRow, eachRowResponse, columns, errors, totalPlaceKeys) => {
+      var that = this;
+      Excel.run(function(context) {
+        let sheet = context.workbook.worksheets.getItem(that.state.activeSheet);
+
+        let lastColumnLetter = numberToLetter(columnCount + 1);
+        let errorColumnLetter = numberToLetter(columnCount + 2);
+
+        let start = startRow + 2;
+        let rowCount = endRow + 1;
+
+        var responseCount = 0;
+        for (var i = start; i < rowCount + 1; i++) {
+          var range = sheet.getRange(lastColumnLetter + "" + i + "");
+          var aa = eachRowResponse[responseCount][0];
+          console.log(aa);
+          range.values = [[eachRowResponse[responseCount][0]]];
+          responseCount++;
+        }
+
+        if (columns[11] == true) {
+          var range = sheet.getRange(errorColumnLetter + "1");
+          range.values = [["Errors"]];
+          range.format.autofitColumns();
+
+          var responseCount = 0;
+          for (var i = start; i < rowCount + 1; i++) {
+            var range = sheet.getRange(errorColumnLetter + "" + i + "");
+            var aa = eachRowResponse[responseCount][0];
+            console.log(aa);
+            range.values = [[errors[responseCount][0]]];
+            responseCount++;
+
+            range.format.autofitColumns();
+          }
+        }
+
+        if(totalPlaceKeys > 0) {
+          setTimeout(() => that.setState({ progressMessage: "Done! Generated "+ totalPlaceKeys+ " Placekeys.", overWriteDisabled: false }), 5000);
+        }
+
+        return context.sync();
+      }).catch(that.errorHandlerFunction);
+    };
+
+    const insertErrors = async (columnCount, startRow, endRow, errors) => {
+      var that = this;
+      Excel.run(function(context) {
+        let sheet = context.workbook.worksheets.getItem(that.state.activeSheet);
+
+        let errorColumn = numberToLetter(columnCount);
+
+        let start = startRow + 2;
+        let rowCount = endRow + 1;
+
+        var responseCount = 0;
+        for (var i = start; i < rowCount + 1; i++) {
+          var range = sheet.getRange(errorColumn + "" + i + "");
+          range.values = [[errors[responseCount][0]]];
+          responseCount++;
+        }
         return context.sync();
       }).catch(that.errorHandlerFunction);
     };
