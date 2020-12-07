@@ -73,7 +73,7 @@ module.exports = async (env, options)  => {
       ]}),
       new ExtractTextPlugin('[name].[hash].css'),
       new HtmlWebpackPlugin({
-        filename: "taskpane.html",
+        filename: "index.html",
           template: './src/taskpane/taskpane.html',
           chunks: ['taskpane', 'vendor', 'polyfills']
       }),
