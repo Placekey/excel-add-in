@@ -386,7 +386,7 @@ class Home extends React.Component<HomeProps, HomeState> {
 
           for (var j = 0; j < columnCount; j++) {
             if (rangeCol[j] == "Placekey") {
-              that.setState({overWriteDisabled: false});
+              that.setState({ overWriteDisabled: false });
               PlacekeyColumnId = j;
               break;
             }
@@ -598,17 +598,33 @@ class Home extends React.Component<HomeProps, HomeState> {
                 console.log(chunks[v][1]);
                 console.log(columnCount);
 
-                await insertToNewColumn(columnCount, chunks[v][0], chunks[v][2], eachRowResponse, columns, errors, totalPlaceKeys);
+                await insertToNewColumn(
+                  columnCount,
+                  chunks[v][0],
+                  chunks[v][2],
+                  eachRowResponse,
+                  columns,
+                  errors,
+                  totalPlaceKeys
+                );
               } catch (e) {
                 if (columns[11] == false) {
-                  insertErrors(columnCount+ 1, chunks[v][0], chunks[v][2], parsed.message);
+                  insertErrors(columnCount + 1, chunks[v][0], chunks[v][2], parsed.message);
                 } else {
-                  insertErrors(columnCount+ 2, chunks[v][0], chunks[v][2], parsed.message);
+                  insertErrors(columnCount + 2, chunks[v][0], chunks[v][2], parsed.message);
                 }
               }
             } else {
               try {
-                await insertToExistingColumn(PlacekeyColumnId, chunks[v][0], chunks[v][2], eachRowResponse, columns, errors, totalPlaceKeys);
+                await insertToExistingColumn(
+                  PlacekeyColumnId,
+                  chunks[v][0],
+                  chunks[v][2],
+                  eachRowResponse,
+                  columns,
+                  errors,
+                  totalPlaceKeys
+                );
               } catch (e) {
                 if (columns[11] == false) {
                   insertErrors(PlacekeyColumnId + 1, chunks[v][0], chunks[v][2], parsed.message);
@@ -643,7 +659,15 @@ class Home extends React.Component<HomeProps, HomeState> {
       }).catch(this.errorHandlerFunction);
     };
 
-    const insertToNewColumn = async (columnCount, startRow, endRow, eachRowResponse, columns, errors, totalPlaceKeys) => {
+    const insertToNewColumn = async (
+      columnCount,
+      startRow,
+      endRow,
+      eachRowResponse,
+      columns,
+      errors,
+      totalPlaceKeys
+    ) => {
       var that = this;
       Excel.run(function(context) {
         let sheet = context.workbook.worksheets.getItem(that.state.activeSheet);
@@ -652,7 +676,7 @@ class Home extends React.Component<HomeProps, HomeState> {
         let errorColumnLetter = numberToLetter(columnCount + 2);
 
         let start = startRow + 2;
-        let rowCount = endRow + 1;
+        let rowCount = startRow + endRow + 1;
 
         var responseCount = 0;
         for (var i = start; i < rowCount + 1; i++) {
@@ -680,15 +704,30 @@ class Home extends React.Component<HomeProps, HomeState> {
           }
         }
 
-        if(totalPlaceKeys > 0) {
-          setTimeout(() => that.setState({ progressMessage: "Done! Generated "+ totalPlaceKeys+ " Placekeys.", overWriteDisabled: false }), 5000);
+        if (totalPlaceKeys > 0) {
+          setTimeout(
+            () =>
+              that.setState({
+                progressMessage: "Done! Generated " + totalPlaceKeys + " Placekeys.",
+                overWriteDisabled: false
+              }),
+            5000
+          );
         }
 
         return context.sync();
       }).catch(that.errorHandlerFunction);
     };
 
-    const insertToExistingColumn = async (columnCount, startRow, endRow, eachRowResponse, columns, errors, totalPlaceKeys) => {
+    const insertToExistingColumn = async (
+      columnCount,
+      startRow,
+      endRow,
+      eachRowResponse,
+      columns,
+      errors,
+      totalPlaceKeys
+    ) => {
       var that = this;
       Excel.run(function(context) {
         let sheet = context.workbook.worksheets.getItem(that.state.activeSheet);
@@ -697,7 +736,7 @@ class Home extends React.Component<HomeProps, HomeState> {
         let errorColumnLetter = numberToLetter(columnCount + 2);
 
         let start = startRow + 2;
-        let rowCount = endRow + 1;
+        let rowCount = startRow + endRow + 1;
 
         var responseCount = 0;
         for (var i = start; i < rowCount + 1; i++) {
@@ -725,8 +764,15 @@ class Home extends React.Component<HomeProps, HomeState> {
           }
         }
 
-        if(totalPlaceKeys > 0) {
-          setTimeout(() => that.setState({ progressMessage: "Done! Generated "+ totalPlaceKeys+ " Placekeys.", overWriteDisabled: false }), 5000);
+        if (totalPlaceKeys > 0) {
+          setTimeout(
+            () =>
+              that.setState({
+                progressMessage: "Done! Generated " + totalPlaceKeys + " Placekeys.",
+                overWriteDisabled: false
+              }),
+            5000
+          );
         }
 
         return context.sync();
@@ -741,7 +787,7 @@ class Home extends React.Component<HomeProps, HomeState> {
         let errorColumn = numberToLetter(columnCount);
 
         let start = startRow + 2;
-        let rowCount = endRow + 1;
+        let rowCount = startRow + endRow + 1;
 
         var responseCount = 0;
         for (var i = start; i < rowCount + 1; i++) {
