@@ -6,8 +6,8 @@
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="Placekey"/>
   <Description DefaultValue="Placekey Excel Add-in."/>
-  <IconUrl DefaultValue="https://placekey-addin.surge.sh/assets/ribbon-ico-32.png"/>
-  <HighResolutionIconUrl DefaultValue="https://placekey-addin.surge.sh/assets/ribbon-ico-64.png"/>
+  <IconUrl DefaultValue="https://placekey-addin.surge.sh/assets/Icon-300-squared@32.png"/>
+  <HighResolutionIconUrl DefaultValue="https://placekey-addin.surge.sh/assets/Icon-300-squared@64.png"/>
   <SupportUrl DefaultValue="https://www.placekey.io/feedback"/>
   <AppDomains>
     <AppDomain>https://www.placekey.io/</AppDomain>
@@ -56,9 +56,9 @@
     </Hosts>
     <Resources>
       <bt:Images>
-        <bt:Image id="Icon.16x16" DefaultValue="https://placekey-addin.surge.sh/assets/ribbon-ico-16.png"/>
-        <bt:Image id="Icon.32x32" DefaultValue="https://placekey-addin.surge.sh/assets/ribbon-ico-32.png"/>
-        <bt:Image id="Icon.80x80" DefaultValue="https://placekey-addin.surge.sh/assets/ribbon-ico-80.png"/>
+        <bt:Image id="Icon.16x16" DefaultValue="https://placekey-addin.surge.sh/assets/Icon-300-squared@16.png"/>
+        <bt:Image id="Icon.32x32" DefaultValue="https://placekey-addin.surge.sh/assets/Icon-300-squared@32.png"/>
+        <bt:Image id="Icon.80x80" DefaultValue="https://placekey-addin.surge.sh/assets/Icon-300-squared@80.png"/>
       </bt:Images>
       <bt:Urls>
         <bt:Url id="Taskpane.Url" DefaultValue="https://placekey-addin.surge.sh/taskpane.html"/>

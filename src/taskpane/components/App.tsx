@@ -1,10 +1,10 @@
 import * as React from "react";
 import Progress from "./Progress";
 // images references in the manifest
-import "../../../assets/ribbon-ico-16.png";
-import "../../../assets/ribbon-ico-32.png";
-import "../../../assets/ribbon-ico-64.png";
-import "../../../assets/ribbon-ico-80.png";
+import "../../../assets/Icon-300-squared@16.png";
+import "../../../assets/Icon-300-squared@32.png";
+import "../../../assets/Icon-300-squared@64.png";
+import "../../../assets/Icon-300-squared@80.png";
 import "../../../assets/placekey-logo.svg";
 import Initial from "./Initial";
 /* global Button, console, Excel, Header, HeroList, HeroListItem, Progress */
