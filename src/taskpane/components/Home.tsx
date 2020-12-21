@@ -800,12 +800,13 @@ class Home extends React.Component<HomeProps, HomeState> {
     };
 
     const numberToLetter = num => {
-      if (num < 1 || num > 26 || typeof num !== "number") {
-        return "";
+      num = num - 1;
+      let letters = "";
+      while (num >= 0) {
+        letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[num % 26] + letters;
+        num = Math.floor(num / 26) - 1;
       }
-      const leveller = 64;
-      //since actually A is represented by 65 and we want to represent it
-      return String.fromCharCode(num + leveller);
+      return letters;
     };
 
     const countInArray = (array, what) => {
