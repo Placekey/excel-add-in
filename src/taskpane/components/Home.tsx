@@ -116,7 +116,6 @@ class Home extends React.Component<HomeProps, HomeState> {
   checkEmptySheet = worksheetName => {
     var that = this;
     Excel.run(function(context) {
-      console.log("Hello");
       var range = context.workbook.worksheets
         .getItem(worksheetName)
         .getUsedRange()
@@ -129,7 +128,7 @@ class Home extends React.Component<HomeProps, HomeState> {
             that.setState({ isEmptyDataView: "block", isDataLoading: false });
           } else {
             that.setState({ rangeOfSheet: range.address });
-            that.getRows(worksheetName, range.address);
+            that.getColumnHeaders(worksheetName, range.address);
           }
         } catch (e) {
           that.setState({ isEmptyDataView: "block", isDataLoading: false });
@@ -139,7 +138,7 @@ class Home extends React.Component<HomeProps, HomeState> {
     }).catch(this.errorHandlerFunction);
   };
 
-  getRows = (worksheetName, rangeVal) => {
+  getColumnHeaders = (worksheetName, rangeVal) => {
     var that = this;
     Excel.run(function(context) {
       var sheet = context.workbook.worksheets.getItem(worksheetName);
@@ -320,6 +319,7 @@ class Home extends React.Component<HomeProps, HomeState> {
         uRange.load(["rowCount", "columnCount"]);
 
         return context.sync().then(function() {
+          that.checkEmptySheet(that.state.activeSheet);
           rowCount = uRange.rowCount;
           columnCount = uRange.columnCount;
           that.setState({ rowCount: rowCount, columnCount: columnCount });
