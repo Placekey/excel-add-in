@@ -133,7 +133,6 @@ class Home extends React.Component<HomeProps, HomeState> {
         } catch (e) {
           that.setState({ isEmptyDataView: "block", isDataLoading: false });
         }
-        console.log(range.address);
       });
     }).catch(this.errorHandlerFunction);
   };
@@ -200,7 +199,6 @@ class Home extends React.Component<HomeProps, HomeState> {
 
   onChangeActiveSheet = value => {
     var that = this;
-    console.log(value);
     this.setState({
       activeSheet: value,
       isEmptyDataView: "none",
@@ -283,7 +281,6 @@ class Home extends React.Component<HomeProps, HomeState> {
       for (var k = 0; k < columns.length; k++) {
         if (columns[k] != "--" && columns[k] != true && columns[k] != false) {
           var count = countInArray(columns, columns[k]);
-          console.log(count);
           if (count > 1) {
             Modal.warning({
               title: "Placekey",
@@ -338,8 +335,9 @@ class Home extends React.Component<HomeProps, HomeState> {
 
         return context.sync().then(function() {
           var rows = range.values;
+          var dataRows = rowCount-1;
           that.setState({ rowsData: range.values });
-          placeKeyAPIAndInsertData(rowCount, columnCount, rows, columns);
+          placeKeyAPIAndInsertData(dataRows, columnCount, rows, columns);
         });
       }).catch(this.errorHandlerFunction);
     };
@@ -369,8 +367,6 @@ class Home extends React.Component<HomeProps, HomeState> {
         return context.sync().then(async function() {
           var rangeCol = range.values[0];
 
-          console.log(rangeCol);
-
           for (var i = 0; i < columns.length - 2; i++) {
             for (var j = 0; j < columnCount; j++) {
               if (columns[i] == rangeCol[j]) {
@@ -392,35 +388,31 @@ class Home extends React.Component<HomeProps, HomeState> {
             }
           }
 
-          // Check if there are more than 90 records on the sheet and prepare chunks
+          // Check if there are more than 100 records on the sheet and prepare chunks
 
           var chunks = [];
-
-          var divided = rowCount / 90;
+          console.log('rowcount' +rowCount);
+          var divided = rowCount / 100;
           var floorDivided = Math.ceil(divided);
           for (var j = 0; j < floorDivided; j++) {
             if (j + 1 == floorDivided) {
               // information in chunks for each item contains: [where it starts, where it ends, how many in chunk]
 
               chunks[j] = [
-                j * 90,
-                j * 90 + (rowCount - (floorDivided - 1) * 90) - 1,
-                rowCount - (floorDivided - 1) * 90 - 1
+                j * 100,
+                j * 100 + (rowCount - (floorDivided - 1) * 100),
+                rowCount - (floorDivided - 1) * 100
               ];
             } else {
-              chunks[j] = [j * 90, j * 90 + 90, 90];
+              chunks[j] = [j * 100, j * 100 + 100, 100];
             }
           }
-
-          console.log(chunks);
+          console.log("chunks numbers" +chunks.length);
           var totalPlaceKeys = 0;
 
           // start looking at chunks of rows
 
           for (var v = 0; v < chunks.length; v++) {
-            console.log(chunks[v][0]);
-            console.log(chunks[v][1]);
-
             var data = {
               queries: [],
               options: {
@@ -448,14 +440,6 @@ class Home extends React.Component<HomeProps, HomeState> {
               countProblem++;
               // If there are empty cells in a row, that's problematic, Bulk API will not process any query if there is one problematic.
               // therfore, we will check and exclude those rows before requesting for Placekeys.
-              console.log(
-                rows[k][colsId[0]],
-                rows[k][colsId[1]],
-                rows[k][colsId[2]],
-                rows[k][colsId[3]],
-                rows[k][colsId[5]],
-                rows[k][colsId[6]]
-              );
               if (
                 (rows[k][colsId[0]] == "" ||
                   rows[k][colsId[2]] == "" ||
@@ -492,7 +476,6 @@ class Home extends React.Component<HomeProps, HomeState> {
               data.queries[y]["query_id"] = k + "1";
               y = y + 1;
             }
-            console.log(data);
 
             // Finish building queries ^^^^^^^^
             // start requesting for Placekeys
@@ -507,7 +490,6 @@ class Home extends React.Component<HomeProps, HomeState> {
             };
             var response: any = await axioConnectorInstance.post("/placekeys", data, params);
 
-            console.log(response);
             var parsed = response.data;
             var eachRowResponse = [];
             var errors = [];
@@ -570,10 +552,6 @@ class Home extends React.Component<HomeProps, HomeState> {
               }
             }
 
-            console.log(problematicRows);
-            console.log("row response: " + eachRowResponse);
-            console.log("error: " + errors);
-
             // We insert problematic rows to final result
 
             for (var i = 0; i < problematicRows.length; i++) {
@@ -587,17 +565,11 @@ class Home extends React.Component<HomeProps, HomeState> {
                 eachRowResponse.splice(problematicRows[i], 0, [""]);
               }
             }
-            console.log("row response: " + eachRowResponse);
-            console.log("error: " + errors);
 
             //If there is not we create one column and insert result.
 
             if (PlacekeyColumnId == 0 || columns[10] == false) {
               try {
-                console.log(chunks[v][0] + 2);
-                console.log(chunks[v][1]);
-                console.log(columnCount);
-
                 await insertToNewColumn(
                   columnCount,
                   chunks[v][0],
@@ -648,13 +620,6 @@ class Home extends React.Component<HomeProps, HomeState> {
               return context.sync();
             }).catch(that.errorHandlerFunction);
           }
-
-          console.log(`The problemetic row is "${problematicRows}"`);
-          console.log(`The key row is "${key}"`);
-          console.log(`The placekeycolumn row is "${PlacekeyColumnId}"`);
-          console.log(`The row is "${rowCount}"`);
-          console.log(`The column is "${columnCount}"`);
-          console.log(`The worksheet is "${sheet.name}"`);
         });
       }).catch(this.errorHandlerFunction);
     };
@@ -681,8 +646,6 @@ class Home extends React.Component<HomeProps, HomeState> {
         var responseCount = 0;
         for (var i = start; i < rowCount + 1; i++) {
           var range = sheet.getRange(lastColumnLetter + "" + i + "");
-          var aa = eachRowResponse[responseCount][0];
-          console.log(aa);
           range.values = [[eachRowResponse[responseCount][0]]];
           responseCount++;
         }
@@ -695,8 +658,6 @@ class Home extends React.Component<HomeProps, HomeState> {
           var responseCount = 0;
           for (var i = start; i < rowCount + 1; i++) {
             var range = sheet.getRange(errorColumnLetter + "" + i + "");
-            var aa = eachRowResponse[responseCount][0];
-            console.log(aa);
             range.values = [[errors[responseCount][0]]];
             responseCount++;
 
@@ -741,8 +702,6 @@ class Home extends React.Component<HomeProps, HomeState> {
         var responseCount = 0;
         for (var i = start; i < rowCount + 1; i++) {
           var range = sheet.getRange(lastColumnLetter + "" + i + "");
-          var aa = eachRowResponse[responseCount][0];
-          console.log(aa);
           range.values = [[eachRowResponse[responseCount][0]]];
           responseCount++;
         }
@@ -755,8 +714,6 @@ class Home extends React.Component<HomeProps, HomeState> {
           var responseCount = 0;
           for (var i = start; i < rowCount + 1; i++) {
             var range = sheet.getRange(errorColumnLetter + "" + i + "");
-            var aa = eachRowResponse[responseCount][0];
-            console.log(aa);
             range.values = [[errors[responseCount][0]]];
             responseCount++;
 
