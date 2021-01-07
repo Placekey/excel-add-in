@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Form, Button, PageHeader } from "antd";
+import { Form, Button, PageHeader, Modal } from "antd";
 import ReactDOM = require("react-dom");
 import Initial from "./Initial";
 
@@ -20,7 +20,16 @@ export default class AdditionalInfo extends React.Component<AdditionalInfoProps,
     };
 
     const onReadPlaceKey = () => {
-      window.open("https://docs.placekey.io/Placekey_Technical_White_Paper.pdf", "_blank");
+      const isIE = /*@cc_on!@*/false || !!document['documentMode'];
+      if(isIE){
+        Modal.warning({
+          title: "Placekey",
+          content: "This view is not support in Internet Explorer",
+          width: "85%"
+        });
+      } else {
+        window.open("https://docs.placekey.io/Placekey_Technical_White_Paper.pdf", "_blank");
+      }
     };
 
     const onAPIDoc = () => {

@@ -41,7 +41,7 @@
     "@babel/polyfill": "^7.11.5",
     "@babel/preset-env": "^7.11.5",
     "@types/find-process": "1.2.0",
-    "@types/office-js": "^1.0.108",
+    "@types/office-js": "^1.0.157",
     "@types/office-runtime": "^1.0.17",
     "@types/react": "^16.14.2",
     "@types/react-dom": "^16.8.4",
