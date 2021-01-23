@@ -485,11 +485,17 @@ class Home extends React.Component<HomeProps, HomeState> {
             var params = {
               headers: {
                 apikey: API_Key,
-                muteHttpExceptions: true
+                muteHttpExceptions: true,
               }
             };
-            var response: any = await axioConnectorInstance.post("/placekeys", data, params);
-
+            var response: any = {};
+            try {
+              response = await axioConnectorInstance.post("/placekeys", data, params);
+            }
+            catch (e) {
+              setTimeout(() => {that.setState({ progressMessage: "Something went wrong, try again later." })}, 3000); 
+              return;
+            }
             var parsed = response.data;
             var eachRowResponse = [];
             var errors = [];
