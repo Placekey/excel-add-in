@@ -1,6 +1,6 @@
 # Placekey Excel Add-in
 
-Placekey is a free, universal standard identifier for any physical place. This Google Sheets Add-on makes it easy to generate Placekeys for your address or POI data. 
+Placekey is a free, universal standard identifier for any physical place. This Excel Add-in makes it easy to generate Placekeys for your address or POI data. 
 
 ## Full Documentation
 https://docs.placekey.io/#cb3ca616-9939-4bef-a978-84f9895e31b3
