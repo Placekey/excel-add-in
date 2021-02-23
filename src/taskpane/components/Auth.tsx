@@ -35,7 +35,7 @@ export default class Auth extends React.Component<AuthProps, AuthState> {
 
   render() {
     const onTokenValidate = async values => {
-        console.log(values);
+      await Excel.run(async (_context) => {
         if(values.apiKey) {
           Office.context.document.settings.set('placeKeyToken', values.apiKey);
           Office.context.document.settings.saveAsync(function(asyncResult) {
@@ -49,6 +49,7 @@ export default class Auth extends React.Component<AuthProps, AuthState> {
             }
           });
         }
+      });
     };
 
     const onFAQ = () => {
